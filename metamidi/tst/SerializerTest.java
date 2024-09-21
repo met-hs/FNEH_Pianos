@@ -2,7 +2,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 class SerializerTest {
@@ -35,6 +34,9 @@ class SerializerTest {
         activeNotes.put(FNEH_Piano.N_OVATION_25_KEY, Set.of(1));
         Serializer serializer = new Serializer();
         byte[] serialize = serializer.serialize(activeNotes);
+        assertEquals(2, serialize.length);
+        assertEquals(33, serialize[0]);
+        assertEquals(1, serialize[1]);
         print(serialize);
     }
 
@@ -44,7 +46,9 @@ class SerializerTest {
         activeNotes.put(FNEH_Piano.FNEH_88_KEY, Set.of(0));
         Serializer serializer = new Serializer();
         byte[] serialize = serializer.serialize(activeNotes);
-        System.out.println(Arrays.toString(serialize));
+        assertEquals(2, serialize.length);
+        assertEquals(-128, serialize[0]);
+        assertEquals(1, serialize[1]);
         print(serialize);
     }
 

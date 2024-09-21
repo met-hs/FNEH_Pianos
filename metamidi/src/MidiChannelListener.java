@@ -1,56 +1,79 @@
+import lombok.RequiredArgsConstructor;
+import midi.MidiDeviceFinder;
+
 import javax.sound.midi.*;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.io.Closeable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
-public class MidiChannelListener {
+@RequiredArgsConstructor
+public class MidiChannelListener implements Closeable {
 
-    public static void main(String[] args) {
-        try {
-            // Obtain a MIDI device that is available for input
-            MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
-            MidiDevice inputDevice = null;
+    private static final int INITIAL_DELAY = 1000;
+    private static final int DELAY = 5000;
+    private static final TimeUnit DELAY_TIME_UNIT = TimeUnit.SECONDS;
+    private MidiDevice midiDevice;
+    private State state = State.SEARCHING;
 
-            for (MidiDevice.Info info : infos) {
-                MidiDevice device = MidiSystem.getMidiDevice(info);
-                device.open();
-                System.out.println("Device: " + info.getName());
-                System.out.println("    Description: " + info.getDescription());
-                System.out.println("    Vendor: " + info.getVendor());
-                System.out.println("    Version: " + info.getVersion());
-                System.out.println("    Max Transmitters: " + device.getMaxTransmitters());
-                System.out.println("    Max Receivers: " + device.getMaxReceivers());
-                System.out.println("    Receivers: " + device.getReceivers());
-                System.out.println("    Transmitters: " + device.getTransmitters());
-                System.out.println();
-                if(info.getName().equals("Piano_LEDs")) {
-                    if (device.getMaxTransmitters() != 0) {
-                        inputDevice = device;
-                        break;
-                    }
-                }
+    private final String deviceName;
+    private final Receiver receiver;
+
+    private final ScheduledExecutorService stateMachineExecutor = Executors.newScheduledThreadPool(1);
+
+
+    public void start() {
+        stateMachineExecutor.scheduleWithFixedDelay(this::runStep, INITIAL_DELAY, DELAY, DELAY_TIME_UNIT);
+    }
+
+    private void runStep() {
+        switch (state) {
+            case SEARCHING -> searchForDevice();
+            case LISTENING -> {}
+            case CLOSED -> System.out.println("Closed Midi Channel Listener for " + deviceName);
+            case FAILED -> {
+                System.out.println("Failed to open Midi device. This is fatal failure. " + deviceName);
+                close();
             }
-            if (inputDevice == null) {
-                System.out.println("No suitable MIDI input device found.");
+        }
+    }
+
+    @Override
+    public void close() {
+        if (midiDevice != null) {
+            midiDevice.close();
+        }
+        state = State.CLOSED;
+        stateMachineExecutor.shutdownNow();
+    }
+
+    private void searchForDevice() {
+
+        try {
+            midiDevice = MidiDeviceFinder.findTransmittingByName(deviceName);
+
+            if (midiDevice == null) {
+                System.out.println("Was not able to find Midi Device, will search again");
                 return;
             }
-            Transmitter transmitter1 = inputDevice.getTransmitter();
 
-            // Open the MIDI device
-            inputDevice.open();
+            midiDevice.open();
 
-            // Create a receiver to handle incoming MIDI messages
-            Receiver receiver = new Receiver() {
-                final NoteTracker noteTracker = new NoteTracker();
+            Transmitter transmitter = midiDevice.getTransmitter();
+
+            transmitter.setReceiver(new Receiver() {
 
                 @Override
                 public void send(MidiMessage message, long timeStamp) {
-                    noteTracker.track(message);
+                    receiver.send(message, timeStamp);
+                    System.out.println(messageToString(message));
                 }
 
                 @Override
                 public void close() {
-                    // Cleanup resources if needed
+                    state = State.LISTENING;
                 }
+
 
                 private String messageToString(MidiMessage message) {
                     StringBuilder sb = new StringBuilder();
@@ -63,21 +86,19 @@ public class MidiChannelListener {
                     }
                     return sb.toString();
                 }
-            };
 
-            transmitter1.setReceiver(receiver);
+            });
 
-            // Keep the application running to receive messages
-            System.out.println("Listening for MIDI messages. Press Enter to exit.");
-            System.in.read();
-
-            // Close the MIDI device
-            inputDevice.close();
-
-        } catch (Exception e) {
-            e.printStackTrace();
+            state = State.LISTENING;
+        } catch (MidiUnavailableException e) {
+            state = State.FAILED;
         }
     }
 
-
+    public enum State {
+        SEARCHING,
+        LISTENING,
+        CLOSED,
+        FAILED
+    }
 }

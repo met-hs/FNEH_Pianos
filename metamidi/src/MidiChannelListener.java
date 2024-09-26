@@ -1,4 +1,3 @@
-import lombok.RequiredArgsConstructor;
 import midi.MidiDeviceFinder;
 
 import javax.sound.midi.*;
@@ -7,11 +6,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-@RequiredArgsConstructor
 public class MidiChannelListener implements Closeable {
 
-    private static final int INITIAL_DELAY = 1000;
-    private static final int DELAY = 5000;
+    private static final int INITIAL_DELAY = 1;
+    private static final int DELAY = 5;
     private static final TimeUnit DELAY_TIME_UNIT = TimeUnit.SECONDS;
     private MidiDevice midiDevice;
     private State state = State.SEARCHING;
@@ -21,15 +19,21 @@ public class MidiChannelListener implements Closeable {
 
     private final ScheduledExecutorService stateMachineExecutor = Executors.newScheduledThreadPool(1);
 
+    public MidiChannelListener(String deviceName, Receiver receiver) {
+        this.deviceName = deviceName;
+        this.receiver = receiver;
+    }
 
     public void start() {
         stateMachineExecutor.scheduleWithFixedDelay(this::runStep, INITIAL_DELAY, DELAY, DELAY_TIME_UNIT);
     }
 
     private void runStep() {
+        System.out.println("running the step ");
         switch (state) {
             case SEARCHING -> searchForDevice();
-            case LISTENING -> {}
+            case LISTENING -> {
+            }
             case CLOSED -> System.out.println("Closed Midi Channel Listener for " + deviceName);
             case FAILED -> {
                 System.out.println("Failed to open Midi device. This is fatal failure. " + deviceName);

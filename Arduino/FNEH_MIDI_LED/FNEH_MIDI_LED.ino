@@ -111,7 +111,6 @@ static void OnNoteOn(byte channel, byte note, byte velocity) {
   Serial.print(note);
   Serial.print(F(", velocity: "));
   Serial.println(velocity);
-  fill_solid(leds,NUM_LEDS,CRGB::Black); 
   leds[note] = myColor;
   leds[note+1] = myColor;
   FastLED.show();   
@@ -125,6 +124,9 @@ static void OnNoteOff(byte channel, byte note, byte velocity) {
   Serial.print(note);
   Serial.print(F(", velocity: "));
   Serial.println(velocity);
+  leds[note] = CRGB::Black;
+  leds[note+1] = CRGB::Black;
+  FastLED.show();   
 }
 
 static void OnAfterTouchPoly(byte channel, byte note, byte pressure) {

@@ -47,7 +47,7 @@ void setup()
   }
 
   // Listen for MIDI messages on channel 1
-  MIDI.begin(1);
+  MIDI.begin(MIDI_CHANNEL_OMNI);
 
   MIDI.setHandleNoteOn(OnNoteOn);
   MIDI.setHandleNoteOff(OnNoteOff);
@@ -67,6 +67,7 @@ void setup()
   MIDI.setHandleStop(OnStop);
   MIDI.setHandleActiveSensing(OnActiveSensing);
   MIDI.setHandleSystemReset(OnSystemReset);
+
 }
 
 // -----------------------------------------------------------------------------

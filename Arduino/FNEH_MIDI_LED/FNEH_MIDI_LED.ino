@@ -8,16 +8,16 @@
 #define MPK_MINI_25_KEY 25
 
 #define FNEH_88_LED_COUNT 176
-#define FNEH_63_LED_COUNT 126
+#define FNEH_63_LED_COUNT 176
 #define FNEH_49_LED_COUNT 98
 #define N_OVATION_25_LED_COUNT 50
 #define MPK_MINI_25_LED_COUNT 50
 
-#define FNEH_88_PIN 9
-#define FNEH_63_PIN 10
-#define FNEH_49_PIN 11
-#define N_OVATION_25_PIN 12
-#define MPK_MINI_25_PIN 13
+#define FNEH_88_PIN 5
+#define FNEH_63_PIN 6
+#define FNEH_49_PIN 7
+#define N_OVATION_25_PIN 8
+#define MPK_MINI_25_PIN 9
 
 CRGB leds_88_key[FNEH_88_LED_COUNT];
 CRGB leds_63_key[FNEH_63_LED_COUNT];
@@ -44,7 +44,7 @@ Keyboard keyboardForChannel(int channel) {
 #define COLOR_ORDER GRB
 // I strongly recommend that you adjust this value to the lowest possible level, 
 // otherwise it may damage your eyesight
-#define BRIGHTNESS  4 
+#define BRIGHTNESS  6
 
 USBMIDI_CREATE_DEFAULT_INSTANCE();
 
@@ -128,27 +128,6 @@ void loop()
 {
   // Listen to incoming notes
   MIDI.read();
-
-  // send a note every second
-  // (dont cáll delay(1000) as it will stall the pipeline)
-  if ((millis() - t0) > 1000)
-  {
-    t0 = millis();
-    //   Serial.print(F(".");
-
-    byte note = random(1, 127);
-    byte velocity = 55;
-    byte channel = 1;
-
-    MIDI.sendNoteOn(note, velocity, channel);
-    MIDI.sendNoteOff(note, velocity, channel);
-  }
-
-  if ((millis() - tClock) > 20)
-  {
-    tClock = millis();
-    MIDI.sendRealTime(MidiType::Clock);
-  }
 }
 
 

@@ -1,7 +1,45 @@
 #include <USB-MIDI.h>
 #include <FastLED.h>
-#define NUM_LEDS    176 // number of leds
-#define DATA_PIN    9   // output pin number
+
+#define FNEH_88_KEY 88
+#define FNEH_63_KEY 63
+#define FNEH_49_KEY 49
+#define N_OVATION_25_KEY 25
+#define MPK_MINI_25_KEY 25
+
+#define FNEH_88_LED_COUNT 176
+#define FNEH_63_LED_COUNT 126
+#define FNEH_49_LED_COUNT 98
+#define N_OVATION_25_LED_COUNT 50
+#define MPK_MINI_25_LED_COUNT 50
+
+#define FNEH_88_PIN 9
+#define FNEH_63_PIN 10
+#define FNEH_49_PIN 11
+#define N_OVATION_25_PIN 12
+#define MPK_MINI_25_PIN 13
+
+CRGB leds_88_key[FNEH_88_LED_COUNT];
+CRGB leds_63_key[FNEH_63_LED_COUNT];
+CRGB leds_49_key[FNEH_49_LED_COUNT];
+CRGB leds_25_novation[N_OVATION_25_LED_COUNT];
+CRGB leds_25_mpk_mini[MPK_MINI_25_LED_COUNT];
+
+// Define the Keyboard struct
+struct Keyboard {
+    CRGB* leds;
+    int ledCount;
+    // Constructor
+    Keyboard(CRGB* leds, int ledCount)
+        : leds(leds),ledCount(ledCount) {}
+};
+
+Keyboard keyboards[2] = { Keyboard(leds_88_key, FNEH_88_LED_COUNT), Keyboard(leds_63_key, FNEH_63_LED_COUNT)};
+
+Keyboard keyboardForChannel(int channel) {
+  return keyboards[channel-1];
+}
+
 #define LED_TYPE    WS2812  
 #define COLOR_ORDER GRB
 // I strongly recommend that you adjust this value to the lowest possible level, 
@@ -15,7 +53,6 @@ unsigned long tClock = millis();
 
 using namespace MIDI_NAMESPACE;
 
-CRGB leds[NUM_LEDS];
 // if you want use another color, just change this line below
 // sample: CRGB myColor(50,0,0); means red color
 CRGB myColor(255,255,255); // white
@@ -28,23 +65,37 @@ void setup()
   Serial.begin(115200);
   while (!Serial);
 
-  FastLED.addLeds<LED_TYPE,DATA_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE,FNEH_88_PIN,COLOR_ORDER>(leds_88_key, FNEH_88_LED_COUNT).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE,FNEH_63_PIN,COLOR_ORDER>(leds_63_key, FNEH_63_LED_COUNT).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE,FNEH_49_PIN,COLOR_ORDER>(leds_49_key, FNEH_49_LED_COUNT).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE,N_OVATION_25_PIN,COLOR_ORDER>(leds_25_novation, N_OVATION_25_LED_COUNT).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE,MPK_MINI_25_PIN,COLOR_ORDER>(leds_25_mpk_mini, MPK_MINI_25_LED_COUNT).setCorrection(TypicalLEDStrip);
+
+  for (Keyboard keyboard : keyboards) {
+    Serial.println(keyboard.ledCount);
+    // turn all leds off
+    fill_solid(keyboard.leds,keyboard.ledCount,CRGB::Black);
+  }
+
   FastLED.setBrightness(BRIGHTNESS);
 
-  // turn all leds off
-  fill_solid(leds,NUM_LEDS,CRGB::Black);
+
   FastLED.show();
 
-  for (int i = 0; i < NUM_LEDS; i++) {
-    fill_gradient_RGB(leds, i,myColor, i+1,myColor);
-    FastLED.show();
-    delay(2);
-    if (i >= 1) {
-      fill_gradient_RGB(leds, i-1,CRGB::Black, i,CRGB::Black);
+  for (Keyboard keyboard : keyboards) {
+    CRGB* leds = keyboard.leds;
+    int numLeds = keyboard.ledCount;
+    for (int i = 0; i < numLeds; i++) {      
+      fill_gradient_RGB(leds, i,myColor, i+1,myColor);
       FastLED.show();
       delay(2);
+      if (i >= 1) {
+        fill_gradient_RGB(leds, i-1,CRGB::Black, i,CRGB::Black);
+        FastLED.show();
+        delay(2);
+      }
     }
-  }
+ }
 
   // Listen for MIDI messages on channel 1
   MIDI.begin(MIDI_CHANNEL_OMNI);
@@ -110,7 +161,14 @@ static void OnNoteOn(byte channel, byte note, byte velocity) {
   Serial.print(F(", note: "));
   Serial.print(note);
   Serial.print(F(", velocity: "));
-  Serial.println(velocity);
+  Serial.print(velocity);
+
+
+  Serial.print(F(", keyboad led count is: "));
+  Serial.println(keyboardForChannel(channel).ledCount);
+
+
+  CRGB* leds = keyboardForChannel(channel).leds;
   leds[note] = myColor;
   leds[note+1] = myColor;
   FastLED.show();   
@@ -124,6 +182,8 @@ static void OnNoteOff(byte channel, byte note, byte velocity) {
   Serial.print(note);
   Serial.print(F(", velocity: "));
   Serial.println(velocity);
+
+  CRGB* leds = keyboardForChannel(channel).leds;
   leds[note] = CRGB::Black;
   leds[note+1] = CRGB::Black;
   FastLED.show();   

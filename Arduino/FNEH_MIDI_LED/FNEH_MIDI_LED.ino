@@ -1,3 +1,5 @@
+// Version 1.1.0.0 - Increment this field for every commit so that we can track what version is pushed to the Arduino at any point in time
+
 #include <USB-MIDI.h>
 #include <FastLED.h>
 
@@ -48,7 +50,7 @@ Starts with large white note + a 2w1b and ends with a large white note
 #define N_OVATION_25_SMALLEST_NOTE 21
 #define MPK_MINI_25_SMALLEST_NOTE 21
 
-#define debug false
+#define debug false // A debug true should never be pushed to the git repository
 
 CRGB leds_88_key[FNEH_88_LED_COUNT];
 CRGB leds_63_key[FNEH_63_LED_COUNT];

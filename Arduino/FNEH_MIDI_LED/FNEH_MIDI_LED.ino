@@ -45,7 +45,7 @@ Starts with large white note + a 2w1b and ends with a large white note
 #define FNEH_88_SMALLEST_NOTE 21
 #define FNEH_63_SMALLEST_NOTE 21
 #define FNEH_49_SMALLEST_NOTE 21
-#define N_OVATION_25_MALLEST_NOTE 21
+#define N_OVATION_25_SMALLEST_NOTE 21
 #define MPK_MINI_25_SMALLEST_NOTE 21
 
 CRGB leds_88_key[FNEH_88_LED_COUNT];
@@ -67,9 +67,12 @@ struct Keyboard {
         : leds(leds),ledCount(ledCount), startNote(startNote), ledPerNote(ledPerNote), skipLEDCount(skipLEDCount) {}
 };
 
-Keyboard keyboards[2] = { 
+Keyboard keyboards[5] = { 
   Keyboard(leds_88_key, FNEH_88_LED_COUNT, FNEH_88_SMALLEST_NOTE, FNEH_88_LED_PER_NOTE, FNEH_88_SKIP_LED_COUNT),
-  Keyboard(leds_63_key, FNEH_63_LED_COUNT, FNEH_63_SMALLEST_NOTE, FNEH_63_LED_PER_NOTE, FNEH_63_SKIP_LED_COUNT)  
+  Keyboard(leds_63_key, FNEH_63_LED_COUNT, FNEH_63_SMALLEST_NOTE, FNEH_63_LED_PER_NOTE, FNEH_63_SKIP_LED_COUNT),
+  Keyboard(leds_49_key, FNEH_49_LED_COUNT, FNEH_49_SMALLEST_NOTE, FNEH_49_LED_PER_NOTE, FNEH_49_SKIP_LED_COUNT),
+  Keyboard(leds_25_novation, N_OVATION_25_LED_COUNT, N_OVATION_25_SMALLEST_NOTE, N_OVATION_25_LED_PER_NOTE, N_OVATION_25_SKIP_LED_COUNT),
+  Keyboard(leds_25_mpk_mini, MPK_MINI_25_LED_COUNT, MPK_MINI_25_SMALLEST_NOTE, MPK_MINI_25_LED_PER_NOTE, MPK_MINI_25_SKIP_LED_COUNT)
 };
 
 Keyboard keyboardForChannel(byte channel) {

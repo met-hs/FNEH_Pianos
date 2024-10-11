@@ -7,8 +7,19 @@
 #define N_OVATION_25_KEY 25
 #define MPK_MINI_25_KEY 25
 
-#define FNEH_88_LED_COUNT 176
-#define FNEH_63_LED_COUNT 176
+//We have 11 LEDs per each 3 inch. LEDs to light up are the ones that are located more than 50% on top of the key.
+//Black notes in an octave are [1,4,7,9,11].
+
+/** FNEH_88
+48" 3' Length
+First and last notes are 15'
+Black notes are 9'
+All other white notes are 8'
+Starts with large white note + a 2w1b and ends with a large white note
+**/
+
+#define FNEH_88_LED_COUNT 176 // 175 + skipping 1
+#define FNEH_63_LED_COUNT 126 
 #define FNEH_49_LED_COUNT 98
 #define N_OVATION_25_LED_COUNT 50
 #define MPK_MINI_25_LED_COUNT 50
@@ -19,6 +30,24 @@
 #define N_OVATION_25_PIN 8
 #define MPK_MINI_25_PIN 9
 
+#define FNEH_88_LED_PER_NOTE 2
+#define FNEH_63_LED_PER_NOTE 2
+#define FNEH_49_LED_PER_NOTE 2
+#define N_OVATION_25_LED_PER_NOTE 2
+#define MPK_MINI_25_LED_PER_NOTE 2
+
+#define FNEH_88_SKIP_LED_COUNT 1
+#define FNEH_63_SKIP_LED_COUNT 1
+#define FNEH_49_SKIP_LED_COUNT 1
+#define N_OVATION_25_SKIP_LED_COUNT 1
+#define MPK_MINI_25_SKIP_LED_COUNT 1
+
+#define FNEH_88_SMALLEST_NOTE 21
+#define FNEH_63_SMALLEST_NOTE 21
+#define FNEH_49_SMALLEST_NOTE 21
+#define N_OVATION_25_MALLEST_NOTE 21
+#define MPK_MINI_25_SMALLEST_NOTE 21
+
 CRGB leds_88_key[FNEH_88_LED_COUNT];
 CRGB leds_63_key[FNEH_63_LED_COUNT];
 CRGB leds_49_key[FNEH_49_LED_COUNT];
@@ -28,16 +57,23 @@ CRGB leds_25_mpk_mini[MPK_MINI_25_LED_COUNT];
 // Define the Keyboard struct
 struct Keyboard {
     CRGB* leds;
-    int ledCount;
+    byte ledCount;
+    byte startNote;
+    byte ledPerNote;
+    byte skipLEDCount;
+
     // Constructor
-    Keyboard(CRGB* leds, int ledCount)
-        : leds(leds),ledCount(ledCount) {}
+    Keyboard(CRGB* leds, byte ledCount, byte startNote, byte ledPerNote, byte skipLEDCount)
+        : leds(leds),ledCount(ledCount), startNote(startNote), ledPerNote(ledPerNote), skipLEDCount(skipLEDCount) {}
 };
 
-Keyboard keyboards[2] = { Keyboard(leds_88_key, FNEH_88_LED_COUNT), Keyboard(leds_63_key, FNEH_63_LED_COUNT)};
+Keyboard keyboards[2] = { 
+  Keyboard(leds_88_key, FNEH_88_LED_COUNT, FNEH_88_SMALLEST_NOTE, FNEH_88_LED_PER_NOTE, FNEH_88_SKIP_LED_COUNT),
+  Keyboard(leds_63_key, FNEH_63_LED_COUNT, FNEH_63_SMALLEST_NOTE, FNEH_63_LED_PER_NOTE, FNEH_63_SKIP_LED_COUNT)  
+};
 
-Keyboard keyboardForChannel(int channel) {
-  return keyboards[channel-1];
+Keyboard keyboardForChannel(byte channel) {
+  return keyboards[channel-1];            //channels go from 1-16
 }
 
 #define LED_TYPE    WS2812  
@@ -55,7 +91,7 @@ using namespace MIDI_NAMESPACE;
 
 // if you want use another color, just change this line below
 // sample: CRGB myColor(50,0,0); means red color
-CRGB myColor(255,255,255); // white
+CRGB myColor = CRGB::Cyan; // white
 
 // -----------------------------------------------------------------------------
 //
@@ -79,13 +115,14 @@ void setup()
 
   FastLED.setBrightness(BRIGHTNESS);
 
-
   FastLED.show();
 
+  //Flash 10 LEDs of each strip so we know they are ready. //TODO: Remove this block so if things reconnect mid show lights don't flash
   for (Keyboard keyboard : keyboards) {
     CRGB* leds = keyboard.leds;
-    int numLeds = keyboard.ledCount;
-    for (int i = 0; i < numLeds; i++) {      
+    byte numLeds = keyboard.ledCount;
+    byte i = 0;
+    for (i ; i < 10; i++) {      
       fill_gradient_RGB(leds, i,myColor, i+1,myColor);
       FastLED.show();
       delay(2);
@@ -95,13 +132,17 @@ void setup()
         delay(2);
       }
     }
+    fill_gradient_RGB(leds, i,CRGB::Black, i,CRGB::Black);
+
  }
 
-  // Listen for MIDI messages on channel 1
+  // Listen for MIDI messages on all channels, each channel represents a keyboard.
   MIDI.begin(MIDI_CHANNEL_OMNI);
 
   MIDI.setHandleNoteOn(OnNoteOn);
   MIDI.setHandleNoteOff(OnNoteOff);
+
+  // We don't have a use for the following functions, we are just logging messages for testing. TODO: Remove so we are not doing unnecessary stuff.
   MIDI.setHandleAfterTouchPoly(OnAfterTouchPoly);
   MIDI.setHandleControlChange(OnControlChange);
   MIDI.setHandleProgramChange(OnProgramChange);
@@ -135,6 +176,8 @@ void loop()
 //
 // -----------------------------------------------------------------------------
 static void OnNoteOn(byte channel, byte note, byte velocity) {
+
+  //TODO: Add an if block so we will skip all the serial print lines.
   Serial.print(F("NoteOn  from channel: "));
   Serial.print(channel);
   Serial.print(F(", note: "));
@@ -146,11 +189,7 @@ static void OnNoteOn(byte channel, byte note, byte velocity) {
   Serial.print(F(", keyboad led count is: "));
   Serial.println(keyboardForChannel(channel).ledCount);
 
-
-  CRGB* leds = keyboardForChannel(channel).leds;
-  leds[note] = myColor;
-  leds[note+1] = myColor;
-  FastLED.show();   
+  alterLEDs(channel, myColor, note);
 
 }
 
@@ -162,9 +201,35 @@ static void OnNoteOff(byte channel, byte note, byte velocity) {
   Serial.print(F(", velocity: "));
   Serial.println(velocity);
 
-  CRGB* leds = keyboardForChannel(channel).leds;
-  leds[note] = CRGB::Black;
-  leds[note+1] = CRGB::Black;
+  alterLEDs(channel, CRGB::Black, note);
+}
+
+void alterLEDs(byte channel, CRGB myColor, byte note) {
+  Keyboard keyboard = keyboardForChannel(channel);
+  CRGB* leds = keyboard.leds;
+  byte ledPerNote = keyboard.ledPerNote;
+  byte startNote = keyboard.startNote;
+  byte skipLEDCount = keyboard.skipLEDCount;
+  byte totalLEDCount = keyboard.ledCount;
+
+  byte notePosition = note - startNote;
+
+  if(totalLEDCount == 176) {
+    if(notePosition < 26) {
+      leds[skipLEDCount + 2 * notePosition] = myColor;
+      leds[skipLEDCount + 2 * notePosition + 1] = myColor;
+    } else if(notePosition > 72 ){
+      leds[skipLEDCount + 2 * notePosition - 2] = myColor;
+      leds[skipLEDCount + 2 * notePosition - 1] = myColor;
+    } else {
+      leds[skipLEDCount + 2 * notePosition - 1] = myColor;
+      leds[skipLEDCount + 2 * notePosition] = myColor;
+    }
+  } else {
+    leds[skipLEDCount + 2 * notePosition] = myColor;
+    leds[skipLEDCount + 2 * notePosition + 1] = myColor;
+  }
+
   FastLED.show();   
 }
 

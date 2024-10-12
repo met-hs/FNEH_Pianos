@@ -23,8 +23,8 @@ Starts with large white note + a 2w1b and ends with a large white note
 #define FNEH_88_LED_COUNT 176 // 175 + skipping 1
 #define FNEH_63_LED_COUNT 126 
 #define FNEH_49_LED_COUNT 98
-#define N_OVATION_25_LED_COUNT 50
-#define MPK_MINI_25_LED_COUNT 50
+#define N_OVATION_25_LED_COUNT 51
+#define MPK_MINI_25_LED_COUNT 46
 
 #define FNEH_88_PIN 5
 #define FNEH_63_PIN 6
@@ -42,13 +42,13 @@ Starts with large white note + a 2w1b and ends with a large white note
 #define FNEH_63_SKIP_LED_COUNT 1
 #define FNEH_49_SKIP_LED_COUNT 1
 #define N_OVATION_25_SKIP_LED_COUNT 1
-#define MPK_MINI_25_SKIP_LED_COUNT 1
+#define MPK_MINI_25_SKIP_LED_COUNT 0
 
 #define FNEH_88_SMALLEST_NOTE 21
-#define FNEH_63_SMALLEST_NOTE 21
+#define FNEH_63_SMALLEST_NOTE 36
 #define FNEH_49_SMALLEST_NOTE 36
-#define N_OVATION_25_SMALLEST_NOTE 21
-#define MPK_MINI_25_SMALLEST_NOTE 21
+#define N_OVATION_25_SMALLEST_NOTE 48
+#define MPK_MINI_25_SMALLEST_NOTE 48
 
 #define debug false // A debug true should never be pushed to the git repository
 
@@ -72,11 +72,11 @@ struct Keyboard {
 };
 
 Keyboard keyboards[5] = { 
-  Keyboard(leds_88_key, FNEH_88_LED_COUNT, FNEH_88_SMALLEST_NOTE, FNEH_88_LED_PER_NOTE, FNEH_88_SKIP_LED_COUNT),
   Keyboard(leds_63_key, FNEH_63_LED_COUNT, FNEH_63_SMALLEST_NOTE, FNEH_63_LED_PER_NOTE, FNEH_63_SKIP_LED_COUNT),
-  Keyboard(leds_49_key, FNEH_49_LED_COUNT, FNEH_49_SMALLEST_NOTE, FNEH_49_LED_PER_NOTE, FNEH_49_SKIP_LED_COUNT),
+  Keyboard(leds_25_mpk_mini, MPK_MINI_25_LED_COUNT, MPK_MINI_25_SMALLEST_NOTE, MPK_MINI_25_LED_PER_NOTE, MPK_MINI_25_SKIP_LED_COUNT),
   Keyboard(leds_25_novation, N_OVATION_25_LED_COUNT, N_OVATION_25_SMALLEST_NOTE, N_OVATION_25_LED_PER_NOTE, N_OVATION_25_SKIP_LED_COUNT),
-  Keyboard(leds_25_mpk_mini, MPK_MINI_25_LED_COUNT, MPK_MINI_25_SMALLEST_NOTE, MPK_MINI_25_LED_PER_NOTE, MPK_MINI_25_SKIP_LED_COUNT)
+  Keyboard(leds_49_key, FNEH_49_LED_COUNT, FNEH_49_SMALLEST_NOTE, FNEH_49_LED_PER_NOTE, FNEH_49_SKIP_LED_COUNT),
+  Keyboard(leds_88_key, FNEH_88_LED_COUNT, FNEH_88_SMALLEST_NOTE, FNEH_88_LED_PER_NOTE, FNEH_88_SKIP_LED_COUNT)
 };
 
 Keyboard keyboardForChannel(byte channel) {
@@ -216,7 +216,23 @@ void alterLEDs(byte channel, CRGB myColor, byte note) {
       leds[skipLEDCount + 2 * notePosition - 1] = myColor;
       leds[skipLEDCount + 2 * notePosition] = myColor;
     }
-  } else if(totalLEDCount == 98) {
+  } 
+  if(totalLEDCount == 126) {
+    if(notePosition < 10) {
+      leds[skipLEDCount + 2 * notePosition] = myColor;
+      leds[skipLEDCount + 2 * notePosition + 1] = myColor;
+    } else if(notePosition > 49 ){
+      leds[skipLEDCount + 2 * notePosition - 3] = myColor;
+      leds[skipLEDCount + 2 * notePosition - 2] = myColor;
+    } else if(notePosition > 32 ){
+      leds[skipLEDCount + 2 * notePosition - 2] = myColor;
+      leds[skipLEDCount + 2 * notePosition - 1] = myColor;
+    } else {
+      leds[skipLEDCount + 2 * notePosition - 1] = myColor;
+      leds[skipLEDCount + 2 * notePosition] = myColor;
+    }
+  } 
+  else if(totalLEDCount == 98) {
     if(notePosition < 11) {
       leds[skipLEDCount + 2 * notePosition] = myColor;
       leds[skipLEDCount + 2 * notePosition + 1] = myColor;
@@ -227,9 +243,22 @@ void alterLEDs(byte channel, CRGB myColor, byte note) {
       leds[skipLEDCount + 2 * notePosition - 1] = myColor;
       leds[skipLEDCount + 2 * notePosition] = myColor;
     }
-  } else {
+  } 
+  else if(totalLEDCount == 46) {
+    if(notePosition < 2) {
       leds[skipLEDCount + 2 * notePosition] = myColor;
-      leds[skipLEDCount + 2 * notePosition + 1] = myColor;    
+      leds[skipLEDCount + 2 * notePosition + 1] = myColor;
+    } else if(notePosition > 5 ){
+      leds[skipLEDCount + 2 * notePosition - 2] = myColor;
+      leds[skipLEDCount + 2 * notePosition - 1] = myColor;
+    } else {
+      leds[skipLEDCount + 2 * notePosition - 1] = myColor;
+      leds[skipLEDCount + 2 * notePosition] = myColor;
+    }
+  } 
+  else {
+    leds[skipLEDCount + 2 * notePosition] = myColor;
+    leds[skipLEDCount + 2 * notePosition + 1] = myColor;    
   }
 
   FastLED.show();   

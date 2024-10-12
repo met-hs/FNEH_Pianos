@@ -46,7 +46,7 @@ Starts with large white note + a 2w1b and ends with a large white note
 
 #define FNEH_88_SMALLEST_NOTE 21
 #define FNEH_63_SMALLEST_NOTE 21
-#define FNEH_49_SMALLEST_NOTE 21
+#define FNEH_49_SMALLEST_NOTE 36
 #define N_OVATION_25_SMALLEST_NOTE 21
 #define MPK_MINI_25_SMALLEST_NOTE 21
 
@@ -216,9 +216,20 @@ void alterLEDs(byte channel, CRGB myColor, byte note) {
       leds[skipLEDCount + 2 * notePosition - 1] = myColor;
       leds[skipLEDCount + 2 * notePosition] = myColor;
     }
+  } else if(totalLEDCount == 98) {
+    if(notePosition < 11) {
+      leds[skipLEDCount + 2 * notePosition] = myColor;
+      leds[skipLEDCount + 2 * notePosition + 1] = myColor;
+    } else if(notePosition > 32 ){
+      leds[skipLEDCount + 2 * notePosition - 2] = myColor;
+      leds[skipLEDCount + 2 * notePosition - 1] = myColor;
+    } else {
+      leds[skipLEDCount + 2 * notePosition - 1] = myColor;
+      leds[skipLEDCount + 2 * notePosition] = myColor;
+    }
   } else {
-    leds[skipLEDCount + 2 * notePosition] = myColor;
-    leds[skipLEDCount + 2 * notePosition + 1] = myColor;
+      leds[skipLEDCount + 2 * notePosition] = myColor;
+      leds[skipLEDCount + 2 * notePosition + 1] = myColor;    
   }
 
   FastLED.show();   

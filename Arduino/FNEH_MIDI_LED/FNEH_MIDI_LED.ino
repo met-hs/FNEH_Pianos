@@ -217,7 +217,7 @@ void alterLEDs(byte channel, CRGB myColor, byte note) {
       leds[skipLEDCount + 2 * notePosition] = myColor;
     }
   } 
-  if(totalLEDCount == 126) {
+  else if(totalLEDCount == 126) {
     if(notePosition < 10) {
       leds[skipLEDCount + 2 * notePosition] = myColor;
       leds[skipLEDCount + 2 * notePosition + 1] = myColor;

@@ -87,7 +87,7 @@ Keyboard keyboardForChannel(byte channel) {
 #define COLOR_ORDER GRB
 // I strongly recommend that you adjust this value to the lowest possible level, 
 // otherwise it may damage your eyesight
-#define BRIGHTNESS  6
+#define BRIGHTNESS  50
 
 USBMIDI_CREATE_DEFAULT_INSTANCE();
 

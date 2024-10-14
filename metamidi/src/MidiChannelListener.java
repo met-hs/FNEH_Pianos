@@ -13,15 +13,17 @@ public class MidiChannelListener implements Closeable {
     private static final TimeUnit DELAY_TIME_UNIT = TimeUnit.SECONDS;
     private MidiDevice midiDevice;
     private State state = State.SEARCHING;
+    private int outputChannel;
 
     private final String deviceName;
     private final Receiver receiver;
 
     private final ScheduledExecutorService stateMachineExecutor = Executors.newScheduledThreadPool(1);
 
-    public MidiChannelListener(String deviceName, Receiver receiver) {
+    public MidiChannelListener(String deviceName, Receiver receiver, int outputChannel) {
         this.deviceName = deviceName;
         this.receiver = receiver;
+        this.outputChannel = outputChannel;
     }
 
     public void start() {
@@ -69,8 +71,12 @@ public class MidiChannelListener implements Closeable {
 
                 @Override
                 public void send(MidiMessage message, long timeStamp) {
-                    receiver.send(message, timeStamp);
-                    System.out.println(messageToString(message));
+                    try {
+                        receiver.send(changeChannel(message, outputChannel), timeStamp);
+                    } catch (InvalidMidiDataException e) {
+                        throw new RuntimeException(e);
+                    }
+                    //System.out.println(messageToString(message));
                 }
 
                 @Override
@@ -78,6 +84,21 @@ public class MidiChannelListener implements Closeable {
                     state = State.LISTENING;
                 }
 
+                private MidiMessage changeChannel(MidiMessage message, int channel) throws InvalidMidiDataException {
+                    // Change the channel
+                    if (message instanceof ShortMessage) {
+                        ShortMessage sm = (ShortMessage) message;
+                        int command = sm.getCommand();
+
+                        // Modify the channel of the message
+                        ShortMessage newMessage = new ShortMessage();
+                        newMessage.setMessage(command, channel, sm.getData1(), sm.getData2());
+                        return newMessage;
+                    } else {
+                        // Send unmodified messages (if they are not ShortMessage)
+                        return message;
+                    }
+                }
 
                 private String messageToString(MidiMessage message) {
                     StringBuilder sb = new StringBuilder();

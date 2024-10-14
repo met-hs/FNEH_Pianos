@@ -205,67 +205,78 @@ void alterLEDs(byte channel, CRGB myColor, byte note) {
 
   byte notePosition = note - startNote;
 
-  if(totalLEDCount == 176) {
+  byte led1;
+  byte led2;
+
+  if(totalLEDCount == FNEH_88_LED_COUNT) {
     if(notePosition < 26) {
-      leds[skipLEDCount + 2 * notePosition] = myColor;
-      leds[skipLEDCount + 2 * notePosition + 1] = myColor;
+      led1 = skipLEDCount + 2 * notePosition;
+      led2 = skipLEDCount + 2 * notePosition + 1;
     } else if(notePosition > 72 ){
-      leds[skipLEDCount + 2 * notePosition - 2] = myColor;
-      leds[skipLEDCount + 2 * notePosition - 1] = myColor;
+      led1 = skipLEDCount + 2 * notePosition - 2;
+      led2 = skipLEDCount + 2 * notePosition - 1;
     } else {
-      leds[skipLEDCount + 2 * notePosition - 1] = myColor;
-      leds[skipLEDCount + 2 * notePosition] = myColor;
+      led1 = skipLEDCount + 2 * notePosition - 1;
+      led2 = skipLEDCount + 2 * notePosition;
     }
   } 
-  else if(totalLEDCount == 126) {
+  else if(totalLEDCount == FNEH_63_LED_COUNT) {
     if(notePosition < 10) {
-      leds[skipLEDCount + 2 * notePosition] = myColor;
-      leds[skipLEDCount + 2 * notePosition + 1] = myColor;
+      led1 = skipLEDCount + 2 * notePosition;
+      led2 = skipLEDCount + 2 * notePosition + 1;
     } else if(notePosition > 49 ){
-      leds[skipLEDCount + 2 * notePosition - 3] = myColor;
-      leds[skipLEDCount + 2 * notePosition - 2] = myColor;
+      led1 = skipLEDCount + 2 * notePosition - 3;
+      led2 = skipLEDCount + 2 * notePosition - 2;
     } else if(notePosition > 32 ){
-      leds[skipLEDCount + 2 * notePosition - 2] = myColor;
-      leds[skipLEDCount + 2 * notePosition - 1] = myColor;
+      led1 = skipLEDCount + 2 * notePosition - 2;
+      led2 = skipLEDCount + 2 * notePosition - 1;
     } else {
-      leds[skipLEDCount + 2 * notePosition - 1] = myColor;
-      leds[skipLEDCount + 2 * notePosition] = myColor;
+      led1 = skipLEDCount + 2 * notePosition - 1;
+      led2 = skipLEDCount + 2 * notePosition;
     }
   } 
-  else if(totalLEDCount == 98) {
+  else if(totalLEDCount == FNEH_49_LED_COUNT) {
     if(notePosition < 11) {
-      leds[skipLEDCount + 2 * notePosition] = myColor;
-      leds[skipLEDCount + 2 * notePosition + 1] = myColor;
+      led1 = skipLEDCount + 2 * notePosition;
+      led2 = skipLEDCount + 2 * notePosition + 1;
     } else if(notePosition > 32 ){
-      leds[skipLEDCount + 2 * notePosition - 2] = myColor;
-      leds[skipLEDCount + 2 * notePosition - 1] = myColor;
+      led1 = skipLEDCount + 2 * notePosition - 2;
+      led2 = skipLEDCount + 2 * notePosition - 1;
     } else {
-      leds[skipLEDCount + 2 * notePosition - 1] = myColor;
-      leds[skipLEDCount + 2 * notePosition] = myColor;
+      led1 = skipLEDCount + 2 * notePosition - 1;
+      led2 = skipLEDCount + 2 * notePosition;
+
     }
   } 
-  else if(totalLEDCount == 49) {
+  else if(totalLEDCount == MPK_MINI_25_LED_COUNT) {
     byte ledPosition = 1.8 * notePosition;
     if(notePosition == 10) {
-      leds[skipLEDCount + ledPosition - 2] = myColor;
-      leds[skipLEDCount + ledPosition - 1] = myColor;      
+      led1 = skipLEDCount + ledPosition - 2;
+      led2 = skipLEDCount + ledPosition - 1;      
     } else if(notePosition > 18 ){
-      leds[skipLEDCount + ledPosition - 3] = myColor;
-      leds[skipLEDCount + ledPosition - 2] = myColor;
+      led1=skipLEDCount + ledPosition - 3;
+      led2=skipLEDCount + ledPosition - 2;
     } else if(notePosition < 8) {
-      leds[skipLEDCount + ledPosition] = myColor;
-      leds[skipLEDCount + ledPosition + 1] = myColor;
+      led1=skipLEDCount + ledPosition;
+      led2=skipLEDCount + ledPosition + 1;
     } else if(notePosition > 12 ){
-      leds[skipLEDCount + ledPosition - 2] = myColor;
-      leds[skipLEDCount + ledPosition - 1] = myColor;
+      led1=skipLEDCount + ledPosition - 2;
+      led2=skipLEDCount + ledPosition - 1;
     }  else {
-      leds[skipLEDCount + ledPosition - 1] = myColor;
-      leds[skipLEDCount + ledPosition] = myColor;
+      led1=skipLEDCount + ledPosition - 1;
+      led2=skipLEDCount + ledPosition;
     }
   } 
   else {
-    leds[skipLEDCount + 2 * notePosition] = myColor;
-    leds[skipLEDCount + 2 * notePosition + 1] = myColor;    
+    led1=skipLEDCount + 2 * notePosition;
+    led2=skipLEDCount + 2 * notePosition + 1;    
+  }
+
+  if(led1 < totalLEDCount) {
+    leds[led1] = myColor;
+  }
+  if(led2 < totalLEDCount) {
+    leds[led2] = myColor;
   }
 
   FastLED.show();   

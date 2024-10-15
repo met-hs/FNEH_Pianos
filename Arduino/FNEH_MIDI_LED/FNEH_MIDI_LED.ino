@@ -9,16 +9,11 @@
 #define N_OVATION_25_KEY 25
 #define MPK_MINI_25_KEY 25
 
-//We have 11 LEDs per each 3 inch. LEDs to light up are the ones that are located more than 50% on top of the key.
-//Black notes in an octave are [1,4,7,9,11].
-
-/** FNEH_88
-48" 3' Length
-First and last notes are 15'
-Black notes are 9'
-All other white notes are 8'
-Starts with large white note + a 2w1b and ends with a large white note
-**/
+#define FNEH_88_COLOUR CRGB::RoyalBlue
+#define FNEH_63_COLOUR CRGB::Crimson
+#define FNEH_49_COLOUR CRGB::Yellow
+#define N_OVATION_25_COLOUR CRGB::OrangeRed
+#define MPK_MINI_25_COLOUR  CRGB::Red
 
 #define FNEH_88_LED_COUNT 176 // 175 + skipping 1
 #define FNEH_63_LED_COUNT 126 
@@ -50,7 +45,7 @@ Starts with large white note + a 2w1b and ends with a large white note
 #define N_OVATION_25_SMALLEST_NOTE 48
 #define MPK_MINI_25_SMALLEST_NOTE 48
 
-#define debug false // A debug true should never be pushed to the git repository
+#define debug true // A debug true should never be pushed to the git repository
 
 CRGB leds_88_key[FNEH_88_LED_COUNT];
 CRGB leds_63_key[FNEH_63_LED_COUNT];
@@ -65,22 +60,25 @@ struct Keyboard {
     byte startNote;
     byte ledPerNote;
     byte skipLEDCount;
+    CRGB defaultColor;
 
+
+  
     // Constructor
-    Keyboard(CRGB* leds, byte ledCount, byte startNote, byte ledPerNote, byte skipLEDCount)
-        : leds(leds),ledCount(ledCount), startNote(startNote), ledPerNote(ledPerNote), skipLEDCount(skipLEDCount) {}
+    Keyboard(CRGB* leds, byte ledCount, byte startNote, byte ledPerNote, byte skipLEDCount, CRGB defaultColor)
+        : leds(leds),ledCount(ledCount), startNote(startNote), ledPerNote(ledPerNote), skipLEDCount(skipLEDCount), defaultColor(defaultColor) {}
 };
 
 Keyboard keyboards[5] = { 
-  Keyboard(leds_88_key, FNEH_88_LED_COUNT, FNEH_88_SMALLEST_NOTE, FNEH_88_LED_PER_NOTE, FNEH_88_SKIP_LED_COUNT),
-  Keyboard(leds_63_key, FNEH_63_LED_COUNT, FNEH_63_SMALLEST_NOTE, FNEH_63_LED_PER_NOTE, FNEH_63_SKIP_LED_COUNT),
-  Keyboard(leds_49_key, FNEH_49_LED_COUNT, FNEH_49_SMALLEST_NOTE, FNEH_49_LED_PER_NOTE, FNEH_49_SKIP_LED_COUNT),
-  Keyboard(leds_25_novation, N_OVATION_25_LED_COUNT, N_OVATION_25_SMALLEST_NOTE, N_OVATION_25_LED_PER_NOTE, N_OVATION_25_SKIP_LED_COUNT),
-  Keyboard(leds_25_mpk_mini, MPK_MINI_25_LED_COUNT, MPK_MINI_25_SMALLEST_NOTE, MPK_MINI_25_LED_PER_NOTE, MPK_MINI_25_SKIP_LED_COUNT)
+  Keyboard(leds_88_key, FNEH_88_LED_COUNT, FNEH_88_SMALLEST_NOTE, FNEH_88_LED_PER_NOTE, FNEH_88_SKIP_LED_COUNT, FNEH_88_COLOUR),
+  Keyboard(leds_63_key, FNEH_63_LED_COUNT, FNEH_63_SMALLEST_NOTE, FNEH_63_LED_PER_NOTE, FNEH_63_SKIP_LED_COUNT, FNEH_63_COLOUR),
+  Keyboard(leds_49_key, FNEH_49_LED_COUNT, FNEH_49_SMALLEST_NOTE, FNEH_49_LED_PER_NOTE, FNEH_49_SKIP_LED_COUNT, FNEH_49_COLOUR),
+  Keyboard(leds_25_novation, N_OVATION_25_LED_COUNT, N_OVATION_25_SMALLEST_NOTE, N_OVATION_25_LED_PER_NOTE, N_OVATION_25_SKIP_LED_COUNT, N_OVATION_25_COLOUR),
+  Keyboard(leds_25_mpk_mini, MPK_MINI_25_LED_COUNT, MPK_MINI_25_SMALLEST_NOTE, MPK_MINI_25_LED_PER_NOTE, MPK_MINI_25_SKIP_LED_COUNT, MPK_MINI_25_COLOUR)
 };
 
 Keyboard keyboardForChannel(byte channel) {
-  return keyboards[channel-1];            //channels go from 1-16
+  return keyboards[channel-1];  //channels go from 1-16
 }
 
 #define LED_TYPE    WS2812  
@@ -95,10 +93,6 @@ unsigned long t0 = millis();
 bool hasLEDUpdated = false;
 
 using namespace MIDI_NAMESPACE;
-
-// if you want use another color, just change this line below
-// sample: CRGB myColor(50,0,0); means red color
-CRGB myColor = CRGB::Cyan; // white
 
 // -----------------------------------------------------------------------------
 //
@@ -131,7 +125,7 @@ void setup()
       byte numLeds = keyboard.ledCount;
       byte i = 0;
       for (i ; i < 10; i++) {      
-        fill_gradient_RGB(leds, i,myColor, i+1,myColor);
+        fill_gradient_RGB(leds, i, keyboard.defaultColor, i+1, keyboard.defaultColor);
         FastLED.show();
         delay(2);
         if (i >= 1) {
@@ -140,7 +134,8 @@ void setup()
           delay(2);
         }
       }
-      fill_gradient_RGB(leds, i,CRGB::Black, i,CRGB::Black);
+      fill_gradient_RGB(leds, i,CRGB::Black, i , CRGB::Black);
+      FastLED.show();
     }
  }
 
@@ -183,7 +178,7 @@ static void OnNoteOn(byte channel, byte note, byte velocity) {
     Serial.println(keyboardForChannel(channel).ledCount);
   }
 
-  alterLEDs(channel, myColor, note);
+  alterLEDs(channel, keyboardForChannel(channel).defaultColor, note);
 
 }
 

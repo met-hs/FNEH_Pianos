@@ -15,14 +15,14 @@ public class FNEHChannelForwarder {
 
         MidiChannelListener midiChannelListener0 = new MidiChannelListener(DEVICE, arduino.getReceiver(), 0);
         MidiChannelListener midiChannelListener1 = new MidiChannelListener(DEVICE, arduino.getReceiver(), 1);
-//        MidiChannelListener midiChannelListener2 = new MidiChannelListener(DEVICE, arduino.getReceiver(), 2);
-//        MidiChannelListener midiChannelListener3 = new MidiChannelListener(DEVICE, arduino.getReceiver(), 3);
-//        MidiChannelListener midiChannelListener4 = new MidiChannelListener(DEVICE, arduino.getReceiver(), 4);
+        MidiChannelListener midiChannelListener2 = new MidiChannelListener(DEVICE, arduino.getReceiver(), 2);
+        MidiChannelListener midiChannelListener3 = new MidiChannelListener(DEVICE, arduino.getReceiver(), 3);
+        MidiChannelListener midiChannelListener4 = new MidiChannelListener(DEVICE, arduino.getReceiver(), 4);
         midiChannelListener0.start();
         midiChannelListener1.start();
-//        midiChannelListener2.start();
-//        midiChannelListener3.start();
-//        midiChannelListener4.start();
+        midiChannelListener2.start();
+        midiChannelListener3.start();
+        midiChannelListener4.start();
     }
 
 

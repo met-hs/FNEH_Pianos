@@ -92,7 +92,7 @@ Keyboard keyboardForChannel(byte channel) {
 USBMIDI_CREATE_DEFAULT_INSTANCE();
 
 unsigned long t0 = millis();
-unsigned long tClock = millis();
+bool hasLEDUpdated = false;
 
 using namespace MIDI_NAMESPACE;
 
@@ -158,6 +158,12 @@ void loop()
 {
   // Listen to incoming notes
   MIDI.read();
+  if ((millis() - t0) > 25 && hasLEDUpdated)
+  {
+    t0 = millis();
+    FastLED.show(); 
+    hasLEDUpdated = false;
+  }  
 }
 
 
@@ -274,10 +280,10 @@ void alterLEDs(byte channel, CRGB myColor, byte note) {
 
   if(led1 < totalLEDCount) {
     leds[led1] = myColor;
+    hasLEDUpdated = true;
   }
   if(led2 < totalLEDCount) {
     leds[led2] = myColor;
+    hasLEDUpdated = true;
   }
-
-  FastLED.show();   
 }

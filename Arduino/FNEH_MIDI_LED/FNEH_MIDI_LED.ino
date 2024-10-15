@@ -1,4 +1,4 @@
-// Version 1.1.0.0 - Increment this field for every commit so that we can track what version is pushed to the Arduino at any point in time
+// Version 1.2.0.0 - Increment this field for every commit so that we can track what version is pushed to the Arduino at any point in time
 
 #include <USB-MIDI.h>
 #include <FastLED.h>

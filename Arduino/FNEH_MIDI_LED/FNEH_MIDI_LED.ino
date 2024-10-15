@@ -273,12 +273,19 @@ void alterLEDs(byte channel, CRGB myColor, byte note) {
     led2=skipLEDCount + 2 * notePosition + 1;    
   }
 
-  if(led1 < totalLEDCount) {
-    leds[led1] = myColor;
-    hasLEDUpdated = true;
-  }
-  if(led2 < totalLEDCount) {
-    leds[led2] = myColor;
+  setIndividualLED(leds, led1, totalLEDCount, myColor);
+  setIndividualLED(leds, led2, totalLEDCount, myColor);
+}
+
+void setIndividualLED(CRGB* leds, byte ledIndex, byte totalLEDCount, CRGB myColor){
+  if(ledIndex < totalLEDCount) {
+    leds[ledIndex] = myColor;
+    if(myColor == CRGB::Crimson) {
+      leds[ledIndex].maximizeBrightness(60);
+    }
+    if(myColor == CRGB::Red) {
+      leds[ledIndex].maximizeBrightness(70);
+    }
     hasLEDUpdated = true;
   }
 }

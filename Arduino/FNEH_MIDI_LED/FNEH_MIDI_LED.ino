@@ -100,6 +100,9 @@ using namespace MIDI_NAMESPACE;
 // sample: CRGB myColor(50,0,0); means red color
 CRGB myColor = CRGB::Cyan; // white
 
+byte fadingKeys[200];
+byte fadingKeysLastIndex
+
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
@@ -278,12 +281,21 @@ void alterLEDs(byte channel, CRGB myColor, byte note) {
     led2=skipLEDCount + 2 * notePosition + 1;    
   }
 
-  if(led1 < totalLEDCount) {
-    leds[led1] = myColor;
-    hasLEDUpdated = true;
-  }
-  if(led2 < totalLEDCount) {
-    leds[led2] = myColor;
+  updateAtIndex(leds, led1, totalLEDCount,myColor);
+  updateAtIndex(leds, led2, totalLEDCount,myColor);
+}
+
+void updateAtIndex(CRGB* leds, byte ledIndex, byte totalLEDCount, CRGB myColor) {
+  if(ledIndex < totalLEDCount) {
+    if(myColor == CRGB::Black) {
+      for(int i = 0; i< 27; i++) {
+        leds[ledIndex].fadeToBlackBy(64);
+        FastLED.show();
+        delay(50);
+      }
+    } else {
+      leds[ledIndex] = myColor;
+    }
     hasLEDUpdated = true;
   }
 }

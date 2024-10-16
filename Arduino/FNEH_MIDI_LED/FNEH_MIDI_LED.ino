@@ -1,4 +1,4 @@
-// Version 1.3.0.0 - Increment this field for every commit so that we can track what version is pushed to the Arduino at any point in time
+// Version 1.4.0.0 - Increment this field for every commit so that we can track what version is pushed to the Arduino at any point in time
 
 #include <USB-MIDI.h>
 #include <FastLED.h>
@@ -45,7 +45,7 @@
 #define N_OVATION_25_SMALLEST_NOTE 48
 #define MPK_MINI_25_SMALLEST_NOTE 48
 
-#define debug true // A debug true should never be pushed to the git repository
+#define debug false // A debug true should never be pushed to the git repository
 
 CRGB leds_88_key[FNEH_88_LED_COUNT];
 CRGB leds_63_key[FNEH_63_LED_COUNT];
@@ -281,10 +281,10 @@ void setIndividualLED(CRGB* leds, byte ledIndex, byte totalLEDCount, CRGB myColo
   if(ledIndex < totalLEDCount) {
     leds[ledIndex] = myColor;
     if(myColor == CRGB::Crimson) {
-      leds[ledIndex].maximizeBrightness(60);
+      leds[ledIndex].maximizeBrightness(100);
     }
     if(myColor == CRGB::Red) {
-      leds[ledIndex].maximizeBrightness(70);
+      leds[ledIndex].maximizeBrightness(250);
     }
     hasLEDUpdated = true;
   }

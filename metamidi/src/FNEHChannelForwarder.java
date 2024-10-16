@@ -5,7 +5,9 @@ import java.io.IOException;
 
 public class FNEHChannelForwarder {
 
-    private static final String DEVICE = "UM-ONE";
+//    private static final String DEVICE = "UM-ONE";
+    private static final String DEVICE = "Bass Station II";
+
 
     public static void main(String[] args) throws MidiUnavailableException, IOException, InvalidMidiDataException, InterruptedException {
 

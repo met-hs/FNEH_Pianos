@@ -1,4 +1,4 @@
-// Version 1.4.0.0 - Increment this field for every commit so that we can track what version is pushed to the Arduino at any point in time
+// Version 1.4.0.1 - Increment this field for every commit so that we can track what version is pushed to the Arduino at any point in time
 
 #include <USB-MIDI.h>
 #include <FastLED.h>
@@ -281,10 +281,13 @@ void setIndividualLED(CRGB* leds, byte ledIndex, byte totalLEDCount, CRGB myColo
   if(ledIndex < totalLEDCount) {
     leds[ledIndex] = myColor;
     if(myColor == CRGB::Crimson) {
-      leds[ledIndex].maximizeBrightness(100);
+      leds[ledIndex].maximizeBrightness(250);
     }
     if(myColor == CRGB::Red) {
       leds[ledIndex].maximizeBrightness(250);
+    }
+    if(myColor == CRGB::OrangeRed) {
+      leds[ledIndex].maximizeBrightness(100);
     }
     hasLEDUpdated = true;
   }

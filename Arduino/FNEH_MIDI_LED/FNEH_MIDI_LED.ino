@@ -309,7 +309,7 @@ void setIndividualLED(CRGB* leds, uint8_t* memo, byte ledIndex, byte totalLEDCou
     } else if (memo[ledIndex] >= DIM_FACTOR) {
       leds[ledIndex] = color;
     } else {
-      leds[ledIndex] = color/(6 * (DIM_FACTOR / memo[ledIndex]));
+      leds[ledIndex] = color/(5 * (DIM_FACTOR / memo[ledIndex]) * (DIM_FACTOR / memo[ledIndex]));
       //Serial.print((DIM_FACTOR/min(DIM_FACTOR, memo[ledIndex])));
       //Serial.print(" ");
     }

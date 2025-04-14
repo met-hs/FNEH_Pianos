@@ -3,6 +3,8 @@
 #include <USB-MIDI.h>
 #include <FastLED.h>
 
+#define DIM_FACTOR 8
+
 #define FNEH_88_KEY 88
 #define FNEH_63_KEY 63
 #define FNEH_49_KEY 49
@@ -53,6 +55,12 @@ CRGB leds_49_key[FNEH_49_LED_COUNT];
 CRGB leds_25_novation[N_OVATION_25_LED_COUNT];
 CRGB leds_25_mpk_mini[MPK_MINI_25_LED_COUNT];
 
+uint8_t memo_88_key[FNEH_88_LED_COUNT];
+uint8_t memo_63_key[FNEH_63_LED_COUNT];
+uint8_t memo_49_key[FNEH_49_LED_COUNT];
+uint8_t memo_25_novation[N_OVATION_25_LED_COUNT];
+uint8_t memo_25_mpk_mini[MPK_MINI_25_LED_COUNT];
+
 // Define the Keyboard struct
 struct Keyboard {
     CRGB* leds;
@@ -61,27 +69,26 @@ struct Keyboard {
     byte ledPerNote;
     byte skipLEDCount;
     CRGB defaultColor;
+    uint8_t* memo;
 
-
-  
     // Constructor
-    Keyboard(CRGB* leds, byte ledCount, byte startNote, byte ledPerNote, byte skipLEDCount, CRGB defaultColor)
-        : leds(leds),ledCount(ledCount), startNote(startNote), ledPerNote(ledPerNote), skipLEDCount(skipLEDCount), defaultColor(defaultColor) {}
+    Keyboard(CRGB* leds, byte ledCount, byte startNote, byte ledPerNote, byte skipLEDCount, CRGB defaultColor, uint8_t* memo)
+        : leds(leds),ledCount(ledCount), startNote(startNote), ledPerNote(ledPerNote), skipLEDCount(skipLEDCount), defaultColor(defaultColor), memo(memo) {}
 };
 
 Keyboard keyboards[5] = { 
-  Keyboard(leds_88_key, FNEH_88_LED_COUNT, FNEH_88_SMALLEST_NOTE, FNEH_88_LED_PER_NOTE, FNEH_88_SKIP_LED_COUNT, FNEH_88_COLOUR),
-  Keyboard(leds_63_key, FNEH_63_LED_COUNT, FNEH_63_SMALLEST_NOTE, FNEH_63_LED_PER_NOTE, FNEH_63_SKIP_LED_COUNT, FNEH_63_COLOUR),
-  Keyboard(leds_49_key, FNEH_49_LED_COUNT, FNEH_49_SMALLEST_NOTE, FNEH_49_LED_PER_NOTE, FNEH_49_SKIP_LED_COUNT, FNEH_49_COLOUR),
-  Keyboard(leds_25_novation, N_OVATION_25_LED_COUNT, N_OVATION_25_SMALLEST_NOTE, N_OVATION_25_LED_PER_NOTE, N_OVATION_25_SKIP_LED_COUNT, N_OVATION_25_COLOUR),
-  Keyboard(leds_25_mpk_mini, MPK_MINI_25_LED_COUNT, MPK_MINI_25_SMALLEST_NOTE, MPK_MINI_25_LED_PER_NOTE, MPK_MINI_25_SKIP_LED_COUNT, MPK_MINI_25_COLOUR)
+  Keyboard(leds_88_key, FNEH_88_LED_COUNT, FNEH_88_SMALLEST_NOTE, FNEH_88_LED_PER_NOTE, FNEH_88_SKIP_LED_COUNT, FNEH_88_COLOUR, memo_88_key),
+  Keyboard(leds_63_key, FNEH_63_LED_COUNT, FNEH_63_SMALLEST_NOTE, FNEH_63_LED_PER_NOTE, FNEH_63_SKIP_LED_COUNT, FNEH_63_COLOUR, memo_63_key),
+  Keyboard(leds_49_key, FNEH_49_LED_COUNT, FNEH_49_SMALLEST_NOTE, FNEH_49_LED_PER_NOTE, FNEH_49_SKIP_LED_COUNT, FNEH_49_COLOUR, memo_49_key),
+  Keyboard(leds_25_novation, N_OVATION_25_LED_COUNT, N_OVATION_25_SMALLEST_NOTE, N_OVATION_25_LED_PER_NOTE, N_OVATION_25_SKIP_LED_COUNT, N_OVATION_25_COLOUR, memo_25_novation),
+  Keyboard(leds_25_mpk_mini, MPK_MINI_25_LED_COUNT, MPK_MINI_25_SMALLEST_NOTE, MPK_MINI_25_LED_PER_NOTE, MPK_MINI_25_SKIP_LED_COUNT, MPK_MINI_25_COLOUR, memo_25_mpk_mini)
 };
 
 Keyboard keyboardForChannel(byte channel) {
   return keyboards[channel-1];  //channels go from 1-16
 }
 
-#define LED_TYPE    WS2812  
+#define LED_TYPE    WS2812B  
 #define COLOR_ORDER GRB
 // I strongly recommend that you adjust this value to the lowest possible level, 
 // otherwise it may damage your eyesight
@@ -178,7 +185,7 @@ static void OnNoteOn(byte channel, byte note, byte velocity) {
     Serial.println(keyboardForChannel(channel).ledCount);
   }
 
-  alterLEDs(channel, keyboardForChannel(channel).defaultColor, note);
+  alterLEDs(channel, true, note);
 
 }
 
@@ -193,16 +200,18 @@ static void OnNoteOff(byte channel, byte note, byte velocity) {
     Serial.println(velocity);
   }
 
-  alterLEDs(channel, CRGB::Black, note);
+  alterLEDs(channel, false, note);
 }
 
-void alterLEDs(byte channel, CRGB myColor, byte note) {
+void alterLEDs(byte channel, bool mode, byte note) { //mode true is ON and mode false is OFF
   Keyboard keyboard = keyboardForChannel(channel);
   CRGB* leds = keyboard.leds;
   byte ledPerNote = keyboard.ledPerNote;
   byte startNote = keyboard.startNote;
   byte skipLEDCount = keyboard.skipLEDCount;
   byte totalLEDCount = keyboard.ledCount;
+  uint8_t* memo = keyboard.memo;
+  CRGB color = keyboard.defaultColor;
 
   byte notePosition = note - startNote;
 
@@ -273,22 +282,30 @@ void alterLEDs(byte channel, CRGB myColor, byte note) {
     led2=skipLEDCount + 2 * notePosition + 1;    
   }
 
-  setIndividualLED(leds, led1, totalLEDCount, myColor);
-  setIndividualLED(leds, led2, totalLEDCount, myColor);
+  setIndividualLED(leds, memo, led1, totalLEDCount, color, DIM_FACTOR, mode);
+  setIndividualLED(leds, memo, led2, totalLEDCount, color, DIM_FACTOR, mode);
+
+  for(int surroundIndex = 1; surroundIndex < DIM_FACTOR; surroundIndex++) {
+    setIndividualLED(leds, memo, led1 - surroundIndex, totalLEDCount, color, DIM_FACTOR - surroundIndex, mode);
+    setIndividualLED(leds, memo, led2 + surroundIndex, totalLEDCount, color, DIM_FACTOR - surroundIndex, mode);
+  }
 }
 
-void setIndividualLED(CRGB* leds, byte ledIndex, byte totalLEDCount, CRGB myColor){
-  if(ledIndex < totalLEDCount) {
-    leds[ledIndex] = myColor;
-    if(myColor == CRGB::Crimson) {
-      leds[ledIndex].maximizeBrightness(250);
+void setIndividualLED(CRGB* leds, uint8_t* memo, byte ledIndex, byte totalLEDCount, CRGB color, uint8_t dimFactor, bool mode){
+  if(ledIndex < totalLEDCount && ledIndex > -1) {
+    if(mode) {
+      memo[ledIndex] = memo[ledIndex] + dimFactor;
+    } else {
+      memo[ledIndex] = memo[ledIndex] - dimFactor;
     }
-    if(myColor == CRGB::Red) {
-      leds[ledIndex].maximizeBrightness(250);
-    }
-    if(myColor == CRGB::OrangeRed) {
-      leds[ledIndex].maximizeBrightness(100);
+    if(memo[ledIndex] == 0) {
+      leds[ledIndex] = CRGB::Black;
+    } else {
+      leds[ledIndex] = color/(DIM_FACTOR/min(DIM_FACTOR, memo[ledIndex]));
+      //leds[ledIndex] = color;
     }
     hasLEDUpdated = true;
   }
 }
+
+

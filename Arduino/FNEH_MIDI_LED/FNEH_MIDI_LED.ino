@@ -3,7 +3,7 @@
 #include <USB-MIDI.h>
 #include <FastLED.h>
 
-#define DIM_FACTOR 8
+#define DIM_FACTOR 12
 
 #define FNEH_88_KEY 88
 #define FNEH_63_KEY 63
@@ -92,7 +92,7 @@ Keyboard keyboardForChannel(byte channel) {
 #define COLOR_ORDER GRB
 // I strongly recommend that you adjust this value to the lowest possible level, 
 // otherwise it may damage your eyesight
-#define BRIGHTNESS  50
+#define BRIGHTNESS  255
 
 USBMIDI_CREATE_DEFAULT_INSTANCE();
 
@@ -293,18 +293,28 @@ void alterLEDs(byte channel, bool mode, byte note) { //mode true is ON and mode 
 
 void setIndividualLED(CRGB* leds, uint8_t* memo, byte ledIndex, byte totalLEDCount, CRGB color, uint8_t dimFactor, bool mode){
   if(ledIndex < totalLEDCount && ledIndex > -1) {
+   // Serial.print(dimFactor);
+   // Serial.print(" ");
+   // Serial.print(memo[ledIndex]);
+   // Serial.print(" ");
     if(mode) {
       memo[ledIndex] = memo[ledIndex] + dimFactor;
     } else {
       memo[ledIndex] = memo[ledIndex] - dimFactor;
     }
+    //Serial.print(memo[ledIndex]);
+    //Serial.print(" ");
     if(memo[ledIndex] == 0) {
       leds[ledIndex] = CRGB::Black;
+    } else if (memo[ledIndex] >= DIM_FACTOR) {
+      leds[ledIndex] = color;
     } else {
-      leds[ledIndex] = color/(DIM_FACTOR/min(DIM_FACTOR, memo[ledIndex]));
-      //leds[ledIndex] = color;
+      leds[ledIndex] = color/(6 * (DIM_FACTOR / memo[ledIndex]));
+      //Serial.print((DIM_FACTOR/min(DIM_FACTOR, memo[ledIndex])));
+      //Serial.print(" ");
     }
     hasLEDUpdated = true;
+    //Serial.println("------");
   }
 }
 

@@ -3,7 +3,7 @@
 #include <USB-MIDI.h>
 #include <FastLED.h>
 
-#define DIM_FACTOR 12
+#define DIM_FACTOR 6
 
 #define FNEH_88_KEY 88
 #define FNEH_63_KEY 63

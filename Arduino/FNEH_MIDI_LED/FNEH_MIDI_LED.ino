@@ -14,8 +14,8 @@
 #define FNEH_88_COLOUR CRGB::RoyalBlue
 #define FNEH_63_COLOUR CRGB::Yellow
 #define FNEH_49_COLOUR CRGB::Yellow
-#define N_OVATION_25_COLOUR CRGB::Crimson
-#define MPK_MINI_25_COLOUR  CRGB::Crimson
+#define N_OVATION_25_COLOUR CRGB::RoyalBlue
+#define MPK_MINI_25_COLOUR  CRGB::Yellow
 
 #define FNEH_88_LED_COUNT 176 // 175 + skipping 1
 #define FNEH_63_LED_COUNT 126 

@@ -23,11 +23,11 @@
 #define N_OVATION_25_LED_COUNT 51
 #define MPK_MINI_25_LED_COUNT 49
 
-#define FNEH_88_PIN 5
-#define FNEH_63_PIN 6
+#define FNEH_88_PIN 8
+#define FNEH_63_PIN 9
 #define FNEH_49_PIN 7
-#define N_OVATION_25_PIN 8
-#define MPK_MINI_25_PIN 9
+#define N_OVATION_25_PIN 5
+#define MPK_MINI_25_PIN 6
 
 #define FNEH_88_LED_PER_NOTE 2
 #define FNEH_63_LED_PER_NOTE 2

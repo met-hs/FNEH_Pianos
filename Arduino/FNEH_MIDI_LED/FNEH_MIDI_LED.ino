@@ -69,6 +69,8 @@ struct Keyboard {
     byte ledPerNote;
     byte skipLEDCount;
     CRGB defaultColor;
+    CRGB currentColor;
+    
     uint8_t* memo;
 
     // Constructor
@@ -203,6 +205,73 @@ static void OnNoteOff(byte channel, byte note, byte velocity) {
   alterLEDs(channel, false, note);
 }
 
+// Helper function to calculate LED positions based on keyboard type and note position
+void calculateLEDPositions(byte totalLEDCount, byte notePosition, byte skipLEDCount, byte &led1, byte &led2) {
+  // Default calculation (used for most keyboards)
+  int offset1 = 0;
+  int offset2 = 1;
+  float multiplier = 2.0;
+  
+  if(totalLEDCount == FNEH_88_LED_COUNT) {
+    if(notePosition < 26) {
+      // No change from default
+    } else if(notePosition > 72) {
+      offset1 = -2;
+      offset2 = -1;
+    } else {
+      offset1 = -1;
+      offset2 = 0;
+    }
+  } 
+  else if(totalLEDCount == FNEH_63_LED_COUNT) {
+    if(notePosition < 10) {
+      // No change from default
+    } else if(notePosition > 49) {
+      offset1 = -3;
+      offset2 = -2;
+    } else if(notePosition > 32) {
+      offset1 = -2;
+      offset2 = -1;
+    } else {
+      offset1 = -1;
+      offset2 = 0;
+    }
+  } 
+  else if(totalLEDCount == FNEH_49_LED_COUNT) {
+    if(notePosition < 11) {
+      // No change from default
+    } else if(notePosition > 32) {
+      offset1 = -2;
+      offset2 = -1;
+    } else {
+      offset1 = -1;
+      offset2 = 0;
+    }
+  } 
+  else if(totalLEDCount == MPK_MINI_25_LED_COUNT) {
+    multiplier = 1.8;
+    if(notePosition == 10) {
+      offset1 = -2;
+      offset2 = -1;
+    } else if(notePosition > 18) {
+      offset1 = -3;
+      offset2 = -2;
+    } else if(notePosition < 8) {
+      // No change from default
+    } else if(notePosition > 12) {
+      offset1 = -2;
+      offset2 = -1;
+    } else {
+      offset1 = -1;
+      offset2 = 0;
+    }
+  }
+  
+  // Calculate final LED positions
+  led1 = skipLEDCount + (multiplier * notePosition) + offset1;
+  led2 = skipLEDCount + (multiplier * notePosition) + offset2;
+}
+
 void alterLEDs(byte channel, bool mode, byte note) { //mode true is ON and mode false is OFF
   Keyboard keyboard = keyboardForChannel(channel);
   CRGB* leds = keyboard.leds;
@@ -217,74 +286,15 @@ void alterLEDs(byte channel, bool mode, byte note) { //mode true is ON and mode 
 
   byte led1;
   byte led2;
+  
+  // Calculate LED positions based on keyboard type and note position
+  calculateLEDPositions(totalLEDCount, notePosition, skipLEDCount, led1, led2);
 
-  if(totalLEDCount == FNEH_88_LED_COUNT) {
-    if(notePosition < 26) {
-      led1 = skipLEDCount + 2 * notePosition;
-      led2 = skipLEDCount + 2 * notePosition + 1;
-    } else if(notePosition > 72 ){
-      led1 = skipLEDCount + 2 * notePosition - 2;
-      led2 = skipLEDCount + 2 * notePosition - 1;
-    } else {
-      led1 = skipLEDCount + 2 * notePosition - 1;
-      led2 = skipLEDCount + 2 * notePosition;
-    }
-  } 
-  else if(totalLEDCount == FNEH_63_LED_COUNT) {
-    if(notePosition < 10) {
-      led1 = skipLEDCount + 2 * notePosition;
-      led2 = skipLEDCount + 2 * notePosition + 1;
-    } else if(notePosition > 49 ){
-      led1 = skipLEDCount + 2 * notePosition - 3;
-      led2 = skipLEDCount + 2 * notePosition - 2;
-    } else if(notePosition > 32 ){
-      led1 = skipLEDCount + 2 * notePosition - 2;
-      led2 = skipLEDCount + 2 * notePosition - 1;
-    } else {
-      led1 = skipLEDCount + 2 * notePosition - 1;
-      led2 = skipLEDCount + 2 * notePosition;
-    }
-  } 
-  else if(totalLEDCount == FNEH_49_LED_COUNT) {
-    if(notePosition < 11) {
-      led1 = skipLEDCount + 2 * notePosition;
-      led2 = skipLEDCount + 2 * notePosition + 1;
-    } else if(notePosition > 32 ){
-      led1 = skipLEDCount + 2 * notePosition - 2;
-      led2 = skipLEDCount + 2 * notePosition - 1;
-    } else {
-      led1 = skipLEDCount + 2 * notePosition - 1;
-      led2 = skipLEDCount + 2 * notePosition;
-
-    }
-  } 
-  else if(totalLEDCount == MPK_MINI_25_LED_COUNT) {
-    byte ledPosition = 1.8 * notePosition;
-    if(notePosition == 10) {
-      led1 = skipLEDCount + ledPosition - 2;
-      led2 = skipLEDCount + ledPosition - 1;      
-    } else if(notePosition > 18 ){
-      led1=skipLEDCount + ledPosition - 3;
-      led2=skipLEDCount + ledPosition - 2;
-    } else if(notePosition < 8) {
-      led1=skipLEDCount + ledPosition;
-      led2=skipLEDCount + ledPosition + 1;
-    } else if(notePosition > 12 ){
-      led1=skipLEDCount + ledPosition - 2;
-      led2=skipLEDCount + ledPosition - 1;
-    }  else {
-      led1=skipLEDCount + ledPosition - 1;
-      led2=skipLEDCount + ledPosition;
-    }
-  } 
-  else {
-    led1=skipLEDCount + 2 * notePosition;
-    led2=skipLEDCount + 2 * notePosition + 1;    
-  }
-
+  // Set the main LEDs
   setIndividualLED(leds, memo, led1, totalLEDCount, color, DIM_FACTOR, mode);
   setIndividualLED(leds, memo, led2, totalLEDCount, color, DIM_FACTOR, mode);
 
+  // Set surrounding LEDs with diminishing brightness for glow effect
   for(int surroundIndex = 1; surroundIndex < DIM_FACTOR; surroundIndex++) {
     setIndividualLED(leds, memo, led1 - surroundIndex, totalLEDCount, color, DIM_FACTOR - surroundIndex, mode);
     setIndividualLED(leds, memo, led2 + surroundIndex, totalLEDCount, color, DIM_FACTOR - surroundIndex, mode);
@@ -293,28 +303,19 @@ void alterLEDs(byte channel, bool mode, byte note) { //mode true is ON and mode 
 
 void setIndividualLED(CRGB* leds, uint8_t* memo, byte ledIndex, byte totalLEDCount, CRGB color, uint8_t dimFactor, bool mode){
   if(ledIndex < totalLEDCount && ledIndex > -1) {
-   // Serial.print(dimFactor);
-   // Serial.print(" ");
-   // Serial.print(memo[ledIndex]);
-   // Serial.print(" ");
     if(mode) {
       memo[ledIndex] = memo[ledIndex] + dimFactor;
     } else {
       memo[ledIndex] = memo[ledIndex] - dimFactor;
     }
-    //Serial.print(memo[ledIndex]);
-    //Serial.print(" ");
     if(memo[ledIndex] == 0) {
       leds[ledIndex] = CRGB::Black;
     } else if (memo[ledIndex] >= DIM_FACTOR) {
       leds[ledIndex] = color;
     } else {
       leds[ledIndex] = color/(5 * (DIM_FACTOR / memo[ledIndex]) * (DIM_FACTOR / memo[ledIndex]));
-      //Serial.print((DIM_FACTOR/min(DIM_FACTOR, memo[ledIndex])));
-      //Serial.print(" ");
     }
     hasLEDUpdated = true;
-    //Serial.println("------");
   }
 }
 

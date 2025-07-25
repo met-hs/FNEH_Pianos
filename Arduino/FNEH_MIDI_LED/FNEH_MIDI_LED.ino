@@ -1,4 +1,4 @@
-// Version 1.5.0.0 - Increment this field for every commit so that we can track what version is pushed to the Arduino at any point in time
+// Version 1.5.1.0
 
 #include <USB-MIDI.h>
 #include <FastLED.h>
@@ -10,6 +10,10 @@
 #define FNEH_49_KEY 49
 #define N_OVATION_25_KEY 25
 #define MPK_MINI_25_KEY 25
+
+// I strongly recommend that you adjust this value to the lowest possible level, 
+// otherwise it may damage your eyesight
+#define BRIGHTNESS  255
 
 // Colors (the LED strips have the Green and Red values reversed so we have to define our own) GGRRBB
 #define myRed             0xFF0000
@@ -69,6 +73,12 @@ CRGB leds_49_key[FNEH_49_LED_COUNT];
 CRGB leds_25_novation[N_OVATION_25_LED_COUNT];
 CRGB leds_25_mpk_mini[MPK_MINI_25_LED_COUNT];
 
+CRGB actual_leds_88_key[FNEH_88_LED_COUNT];
+CRGB actual_leds_63_key[FNEH_63_LED_COUNT];
+CRGB actual_leds_49_key[FNEH_49_LED_COUNT];
+CRGB actual_leds_25_novation[N_OVATION_25_LED_COUNT];
+CRGB actual_leds_25_mpk_mini[MPK_MINI_25_LED_COUNT];
+
 uint8_t memo_88_key[FNEH_88_LED_COUNT];
 uint8_t memo_63_key[FNEH_63_LED_COUNT];
 uint8_t memo_49_key[FNEH_49_LED_COUNT];
@@ -78,6 +88,7 @@ uint8_t memo_25_mpk_mini[MPK_MINI_25_LED_COUNT];
 // Define the Keyboard struct
 struct Keyboard {
     CRGB* leds;
+    CRGB* ledsActual;
     byte ledCount;
     byte startNote;
     byte ledPerNote;
@@ -85,18 +96,21 @@ struct Keyboard {
     CRGB defaultColor;
     CRGB currentColor;   
     uint8_t* memo;
+    uint8_t maximumBrightness;
 
     // Constructor
-    Keyboard(CRGB* leds, byte ledCount, byte startNote, byte ledPerNote, byte skipLEDCount, CRGB defaultColor, CRGB currentColor, uint8_t* memo)
-        : leds(leds),ledCount(ledCount), startNote(startNote), ledPerNote(ledPerNote), skipLEDCount(skipLEDCount), defaultColor(defaultColor), currentColor(currentColor), memo(memo) {}
+    Keyboard(CRGB* leds, CRGB* ledsActual, byte ledCount, byte startNote, byte ledPerNote, byte skipLEDCount, CRGB defaultColor, CRGB currentColor, uint8_t* memo)
+        : leds(leds), ledsActual(ledsActual), ledCount(ledCount), startNote(startNote), ledPerNote(ledPerNote), skipLEDCount(skipLEDCount), defaultColor(defaultColor), currentColor(currentColor), memo(memo) { 
+      maximumBrightness = BRIGHTNESS;
+    }
 };
 
 Keyboard keyboards[5] = { 
-  Keyboard(leds_88_key, FNEH_88_LED_COUNT, FNEH_88_SMALLEST_NOTE, FNEH_88_LED_PER_NOTE, FNEH_88_SKIP_LED_COUNT, FNEH_88_COLOUR, FNEH_88_COLOUR, memo_88_key),
-  Keyboard(leds_63_key, FNEH_63_LED_COUNT, FNEH_63_SMALLEST_NOTE, FNEH_63_LED_PER_NOTE, FNEH_63_SKIP_LED_COUNT, FNEH_63_COLOUR, FNEH_63_COLOUR, memo_63_key),
-  Keyboard(leds_49_key, FNEH_49_LED_COUNT, FNEH_49_SMALLEST_NOTE, FNEH_49_LED_PER_NOTE, FNEH_49_SKIP_LED_COUNT, FNEH_49_COLOUR, FNEH_49_COLOUR, memo_49_key),
-  Keyboard(leds_25_novation, N_OVATION_25_LED_COUNT, N_OVATION_25_SMALLEST_NOTE, N_OVATION_25_LED_PER_NOTE, N_OVATION_25_SKIP_LED_COUNT, N_OVATION_25_COLOUR, N_OVATION_25_COLOUR, memo_25_novation),
-  Keyboard(leds_25_mpk_mini, MPK_MINI_25_LED_COUNT, MPK_MINI_25_SMALLEST_NOTE, MPK_MINI_25_LED_PER_NOTE, MPK_MINI_25_SKIP_LED_COUNT, MPK_MINI_25_COLOUR, MPK_MINI_25_COLOUR, memo_25_mpk_mini)
+  Keyboard(leds_88_key, actual_leds_88_key,  FNEH_88_LED_COUNT, FNEH_88_SMALLEST_NOTE, FNEH_88_LED_PER_NOTE, FNEH_88_SKIP_LED_COUNT, FNEH_88_COLOUR, FNEH_88_COLOUR, memo_88_key),
+  Keyboard(leds_63_key, actual_leds_63_key, FNEH_63_LED_COUNT, FNEH_63_SMALLEST_NOTE, FNEH_63_LED_PER_NOTE, FNEH_63_SKIP_LED_COUNT, FNEH_63_COLOUR, FNEH_63_COLOUR, memo_63_key),
+  Keyboard(leds_49_key, actual_leds_49_key, FNEH_49_LED_COUNT, FNEH_49_SMALLEST_NOTE, FNEH_49_LED_PER_NOTE, FNEH_49_SKIP_LED_COUNT, FNEH_49_COLOUR, FNEH_49_COLOUR, memo_49_key),
+  Keyboard(leds_25_novation, actual_leds_25_novation, N_OVATION_25_LED_COUNT, N_OVATION_25_SMALLEST_NOTE, N_OVATION_25_LED_PER_NOTE, N_OVATION_25_SKIP_LED_COUNT, N_OVATION_25_COLOUR, N_OVATION_25_COLOUR, memo_25_novation),
+  Keyboard(leds_25_mpk_mini, actual_leds_25_mpk_mini, MPK_MINI_25_LED_COUNT, MPK_MINI_25_SMALLEST_NOTE, MPK_MINI_25_LED_PER_NOTE, MPK_MINI_25_SKIP_LED_COUNT, MPK_MINI_25_COLOUR, MPK_MINI_25_COLOUR, memo_25_mpk_mini)
 };
 
 Keyboard keyboardForChannel(byte channel) {
@@ -116,9 +130,7 @@ CRGB getColorFromNote(byte note) {
 
 #define LED_TYPE    WS2812B  
 #define COLOR_ORDER GRB
-// I strongly recommend that you adjust this value to the lowest possible level, 
-// otherwise it may damage your eyesight
-#define BRIGHTNESS  255
+
 
 USBMIDI_CREATE_DEFAULT_INSTANCE();
 
@@ -135,11 +147,11 @@ void setup()
   Serial.begin(115200);
   while (!Serial);
 
-  FastLED.addLeds<LED_TYPE,FNEH_88_PIN,COLOR_ORDER>(leds_88_key, FNEH_88_LED_COUNT).setCorrection(TypicalLEDStrip);
-  FastLED.addLeds<LED_TYPE,FNEH_63_PIN,COLOR_ORDER>(leds_63_key, FNEH_63_LED_COUNT).setCorrection(TypicalLEDStrip);
-  FastLED.addLeds<LED_TYPE,FNEH_49_PIN,COLOR_ORDER>(leds_49_key, FNEH_49_LED_COUNT).setCorrection(TypicalLEDStrip);
-  FastLED.addLeds<LED_TYPE,N_OVATION_25_PIN,COLOR_ORDER>(leds_25_novation, N_OVATION_25_LED_COUNT).setCorrection(TypicalLEDStrip);
-  FastLED.addLeds<LED_TYPE,MPK_MINI_25_PIN,COLOR_ORDER>(leds_25_mpk_mini, MPK_MINI_25_LED_COUNT).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE,FNEH_88_PIN,COLOR_ORDER>(actual_leds_88_key, FNEH_88_LED_COUNT).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE,FNEH_63_PIN,COLOR_ORDER>(actual_leds_63_key, FNEH_63_LED_COUNT).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE,FNEH_49_PIN,COLOR_ORDER>(actual_leds_49_key, FNEH_49_LED_COUNT).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE,N_OVATION_25_PIN,COLOR_ORDER>(actual_leds_25_novation, N_OVATION_25_LED_COUNT).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE,MPK_MINI_25_PIN,COLOR_ORDER>(actual_leds_25_mpk_mini, MPK_MINI_25_LED_COUNT).setCorrection(TypicalLEDStrip);
 
   for (Keyboard keyboard : keyboards) {
     Serial.println(keyboard.ledCount);
@@ -154,7 +166,7 @@ void setup()
   //Flash 10 LEDs of each strip so we know they are ready.
   if(debug) {
     for (Keyboard keyboard : keyboards) {
-      CRGB* leds = keyboard.leds;
+      CRGB* leds = keyboard.ledsActual;
       byte numLeds = keyboard.ledCount;
       byte i = 0;
       for (i ; i < 10; i++) {      
@@ -177,6 +189,7 @@ void setup()
 
   MIDI.setHandleNoteOn(OnNoteOn);
   MIDI.setHandleNoteOff(OnNoteOff);
+  MIDI.setHandleControlChange(OnControlChange);
 }
 
 // -----------------------------------------------------------------------------
@@ -189,11 +202,13 @@ void loop()
   if ((millis() - t0) > 25 && hasLEDUpdated)
   {
     t0 = millis();
+    for(int i = 0; i< 5 ; i++) {
+        scaleAndSetBrightness(keyboards[i].leds, keyboards[i].ledsActual, keyboards[i].ledCount, keyboards[i].maximumBrightness);
+    }
     FastLED.show(); 
     hasLEDUpdated = false;
   }  
 }
-
 
 // -----------------------------------------------------------------------------
 //
@@ -232,6 +247,34 @@ static void OnNoteOff(byte channel, byte note, byte velocity) {
   if(channel < 11) {
     alterLEDs(channel, false, note);
   }
+}
+
+
+// ControlChange from channel: 15, number: 102, value: 35
+static void OnControlChange(byte channel, byte number, byte value) {
+
+  if(debug) {
+    Serial.print(F("ControlChange from channel: "));
+    Serial.print(channel);
+    Serial.print(F(", number: "));
+    Serial.print(number);
+    Serial.print(F(", value: "));
+    Serial.println(value);
+  }
+  if(channel > 10) {
+    alterBrightness(channel, number, value);
+  }
+  hasLEDUpdated = true;
+}
+
+void alterBrightness(byte channel, byte number, byte value) {
+  Keyboard keyboard = keyboardForChannel(channel - 10);
+  if(number != 102) {
+    return;
+  } 
+  keyboard.maximumBrightness = 2 * value + 1;
+  //TODO fix the code here
+  keyboards[channel-11] = keyboard;
 }
 
 void alterColor(byte channel, byte note) {
@@ -351,6 +394,13 @@ void setIndividualLED(CRGB* leds, uint8_t* memo, byte ledIndex, byte totalLEDCou
       leds[ledIndex] = color/(5 * (DIM_FACTOR / memo[ledIndex]) * (DIM_FACTOR / memo[ledIndex]));
     }
     hasLEDUpdated = true;
+  }
+}
+
+void scaleAndSetBrightness(CRGB* leds, CRGB* ledsActual, int count, uint8_t brightness) {
+  for (int i = 0; i < count; i++) {
+    ledsActual[i] = leds[i];
+    ledsActual[i].nscale8(brightness);
   }
 }
 

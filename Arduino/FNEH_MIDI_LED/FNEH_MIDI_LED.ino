@@ -398,6 +398,9 @@ void setIndividualLED(CRGB* leds, uint8_t* memo, byte ledIndex, byte totalLEDCou
 }
 
 void scaleAndSetBrightness(CRGB* leds, CRGB* ledsActual, int count, uint8_t brightness) {
+  if(brightness == 1) {
+    brightness = 0;
+  }
   for (int i = 0; i < count; i++) {
     ledsActual[i] = leds[i];
     ledsActual[i].nscale8(brightness);
